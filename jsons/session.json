@@ -1,0 +1,13 @@
+{
+    "name": "张三",
+    "age": 18,
+    "hobbies": [
+        "football",
+        "basketball"
+    ],
+    "address": {
+        "city": "上海",
+        "street": "上海路"
+    },
+    "gender": "male"
+}
