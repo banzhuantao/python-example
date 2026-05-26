@@ -1,0 +1,6 @@
+
+# 以写入模式打开文件，写入 "hello world"
+with open("resource/一个文件.txt", "w", encoding="utf-8") as f_write:
+    f_write.write("hello world")
+
+f.close()
