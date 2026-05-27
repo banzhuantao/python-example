@@ -24,13 +24,13 @@ export PYTHON_BUILD_MIRROR_URL_SKIP_CHECKSUM=1
 
 ```bash
 # 创建环境
-python3 -m venv venv
+python -m venv .venv
 
 # 激活环境(macos / linux)
 source venv/bin/activate
 
 # 安装 openai(只在当前项目生效)
-pip3 install openai
+pip install openai
 
 # 退出虚拟环境
 deactivate
@@ -41,13 +41,13 @@ deactivate
 ## 生成依赖清单
 
 ```bash
-pip3 freeze > requirements.txt
+pip freeze > requirements.txt
 ```
 
 ## 按照依赖清单下载项目虚拟环境依赖
 
 ```bash
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ---
