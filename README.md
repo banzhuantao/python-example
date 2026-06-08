@@ -1,4 +1,4 @@
-# py-ai 🧱🍑
+# python-example
 
 ## 使用到的外链
 
@@ -113,3 +113,9 @@ launchctl disable ollama
 ```
 
 ---
+
+robots.txt 查看规则
+
+---
+
+
