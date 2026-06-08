@@ -9,6 +9,28 @@ TMDB_TOP_ONE_PAGE_URL = f"{TMDB_BASE_URL}/movie/top-rated"
 TMDB_TOP_AFTER_ONE_PAGE_URL = f"{TMDB_BASE_URL}/discover/movie/items"
 MOVIE_LIST_FILE = "csv_data/movie_list.csv"
 
+# 格式化电影年份
+def format_year(year):
+    match = re.search(r"\d+", year)
+    if match:
+        return match.group()
+    return None
+
+# 格式化电影上映时间
+def format_release_date(release_date):
+    match = re.search(r"\d{4}-\d{2}-\d{2}", release_date)
+    if match:
+        return match.group()
+    return None
+
+# 格式化电影时长
+def format_duration(duration):
+    g_duration = duration[0] if duration else ""
+    h_res = re.search(r"(\d+)h", g_duration)
+    m_res = re.search(r"(\d+)m", g_duration)
+    h = int(h_res.group(1)) if h_res else 0
+    m = int(m_res.group(1)) if m_res else 0
+    return h * 60 + m
 
 # 获取电影详情
 def get_movie_info(movie_info_url):
@@ -17,22 +39,39 @@ def get_movie_info(movie_info_url):
 
     # 2. 解析数据，获取电影详情
     document = html.fromstring(response.text)
-    movie_info = {
-        "电影名称": document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/h2/a[1]/text()')[0],
-        "年份": document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/h2/span/text()')[0][1:-1],
-        # := 将 re.search 的结果赋值给 match， 同时作为表达式值参与判断
-        "上映时间": match.group() if (match := re.search(r"\d{4}-\d{2}-\d{2}", document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/div/span[2]/text()')[0]))  else None,
-        # "上映时间": re.search(r"\d{4}-\d{2}-\d{2}", document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/div/span[2]/text()')[0]).group(),
-        "类型": ",".join(document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/div/span[3]/a/text()')),
-        "时长": (text := document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/div/span[4]/text()')) and (text[0] and text[0].strip()) or None,
-        # "时长": document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/div/span[4]/text()')[0].strip(),
-        "评分": document.xpath('//*[@id="consensus_pill"]/div/div[1]/div/div/@data-percent')[0],
-        "语言": ",".join(
-            document.xpath('//*[@id="media_v4"]/div/div/div[2]/div/section/div[1]/div/section[1]/p[3]/text()')),
-        "导演": ",".join(document.xpath('//*[@id="original_header"]/div[2]/section/div[3]/ol/li[1]/p[1]/a/text()')),
-        "演员": ",".join(document.xpath('//*[@id="cast_scroller"]/ol/li[@class="card"]/p[1]/a/text()')),
-        "简介": document.xpath('//*[@id="original_header"]/div[2]/section/div[3]/div/p/text()')[0]
 
+    # 电影名称
+    movie_name= document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/h2/a[1]/text()')
+    # 年份
+    year= document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/h2/span/text()')
+    # 上映时间
+    release_date= document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/div/span[2]/text()')
+    # 类型
+    genre= document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/div/span[3]/a/text()')
+    # 时长
+    duration= document.xpath('//*[@id="original_header"]/div[2]/section/div[1]/div/span[4]/text()')
+    # 评分
+    rating= document.xpath('//*[@id="consensus_pill"]/div/div[1]/div/div/@data-percent')
+    # 语言
+    language= document.xpath('//*[@id="media_v4"]/div/div/div[2]/div/section/div[1]/div/section[1]/p[3]/text()')
+    # 导演
+    director= document.xpath('//*[@id="original_header"]/div[2]/section/div[3]/ol/li[1]/p[1]/a/text()')
+    # 演员
+    performers= document.xpath('//*[@id="cast_scroller"]/ol/li[@class="card"]/p[1]/a/text()')
+    # 简介
+    description= document.xpath('//*[@id="original_header"]/div[2]/section/div[3]/div/p/text()')
+
+    movie_info = {
+        "电影名称": movie_name[0] if movie_name else "",
+        "年份": format_year(year[0] if year else ""),
+        "上映时间": format_release_date(release_date[0] if release_date else ""),
+        "类型": ",".join(genre) if genre else "",
+        "时长": format_duration(duration),
+        "评分": rating[0] if rating else "",
+        "语言": language[0].strip() if language else "",
+        "导演": director[0].strip() if director else "",
+        "演员": ",".join(performers) if performers else "",
+        "简介": description[0] if description else ""
     }
 
     # 3. 返回电影详情
@@ -41,7 +80,7 @@ def get_movie_info(movie_info_url):
 
 # 保存电影数据为 csv 文件
 def save_all_movies(all_movies):
-    with open(MOVIE_LIST_FILE, "w", newline="") as csvfile:
+    with open(MOVIE_LIST_FILE, "w", newline="", encoding="utf-8-sig") as csvfile:
         writer = csv.DictWriter(csvfile,
                                 fieldnames=["电影名称", "年份", "上映时间", "类型", "时长", "评分", "语言", "导演",
                                             "演员",
@@ -55,6 +94,7 @@ def save_all_movies(all_movies):
 def main():
     all_movies = []
 
+    # 获取 1-5 页的电影排名数据
     for page_num in range(1, 6):
         print(f"开始获取 第{page_num}页 榜单数据")
 
