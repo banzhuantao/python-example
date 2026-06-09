@@ -221,3 +221,6 @@ __marimo__/
 
 # generate files
 *.csv
+
+# macOS
+.DS_Store
